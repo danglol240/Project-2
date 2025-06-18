@@ -1,5 +1,6 @@
 import pefile
 import os
+import time
 import array
 import math
 import pickle
@@ -8,7 +9,16 @@ import sys
 import argparse
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+import requests
+import hashlib
+import base64
+import json
 
+if len(sys.argv) < 3:
+    sys.exit(1)
+
+file_path = sys.argv[1]
+api_key = sys.argv[2].strip()
 
 #For calculating the entropy
 def get_entropy(data):
@@ -193,3 +203,66 @@ if __name__ == '__main__':
     #prediciting if the PE is malicious or not based on the extracted features
     res= clf.predict([pe_features])[0]
     print ('The file %s is %s' % (os.path.basename(sys.argv[1]),['malicious', 'legitimate'][res]))
+
+    try:
+        with open(file_path, "rb") as f:
+            files = {"file": (os.path.basename(file_path), f)}
+            response = requests.post(
+                "https://www.virustotal.com/api/v3/files",
+                headers={"x-apikey": api_key},
+                files=files
+            )
+        if response.status_code == 200:
+            analysis_id = response.json()["data"]["id"]
+            # Chờ cho đến khi phân tích xong (trạng thái "completed")
+            for _ in range(10):  # Thử lại tối đa 10 lần, mỗi lần cách nhau 3 giây
+                report = requests.get(
+                    f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
+                    headers={"x-apikey": api_key}
+                )
+                if report.status_code == 200:
+                    attributes = report.json()["data"]["attributes"]
+                    status = attributes.get("status", "")
+                    if status == "completed":
+                        stats = attributes.get("stats", {})
+                        harmless = stats.get("harmless", 0)
+                        malicious = stats.get("malicious", 0)
+                        suspicious = stats.get("suspicious", 0)
+                        undetected = stats.get("undetected", 0)
+                        total = harmless + malicious + suspicious + undetected
+                        # Mã hóa kết quả phân tích thành base64
+                        stats_dict = {
+                            "harmless": harmless,
+                            "malicious": malicious,
+                            "suspicious": suspicious,
+                            "undetected": undetected,
+                            "total": total
+                        }
+                        print(f"\n🌐 VirusTotal: Kết quả phân tích:")
+                        print(f"  - Harmless: {harmless}")
+                        print(f"  - Malicious: {malicious}")
+                        print(f"  - Suspicious: {suspicious}")
+                        print(f"  - Undetected: {undetected}")
+                        print(f"  - Tổng số engine: {total}")
+
+                        # Tạo link truy cập kết quả bằng SHA256
+                        with open(file_path, "rb") as f:
+                            sha256 = hashlib.sha256(f.read()).hexdigest()
+                        vt_link = f"https://www.virustotal.com/gui/file/{sha256}"
+                        print(f"🔗 Xem chi tiết tại: {vt_link}")
+                        break
+                    else:
+                        time.sleep(3)
+                else:
+                    print(f"❌ Lỗi lấy báo cáo VirusTotal: {report.status_code}\n{report.text}")
+                    break
+            else:
+                print("⏳ Đợi quá lâu, kết quả phân tích chưa sẵn sàng.")
+                with open(file_path, "rb") as f:
+                    sha256 = hashlib.sha256(f.read()).hexdigest()
+                vt_link = f"https://www.virustotal.com/gui/file/{sha256}"
+                print(f"🔗 Bạn có thể kiểm tra kết quả sau tại: {vt_link}")
+        else:
+            print(f"❌ VirusTotal gửi thất bại: {response.status_code}\n{response.text}")
+    except Exception as e:
+        print(f"❌ Lỗi gửi hoặc lấy kết quả VirusTotal: {e}")

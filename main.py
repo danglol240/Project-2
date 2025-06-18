@@ -5,41 +5,39 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox, Toplevel, scrolledtext, simpledialog
 
+
+VT_API_KEY = "00790b1307e3907a2c3d7e754a362d397b9844f27239f6af750411d8852400c0" 
 def run_PE():
     file_path = filedialog.askopenfilename(
         title="Chọn file PE",
         filetypes=[("Executable files", "*.exe *.dll"), ("All files", "*.*")]
     )
     if file_path:
+        api_key = VT_API_KEY
+        if not api_key:
+            return
         try:
-            # Lấy output từ PE_main.py
             result = subprocess.run(
-                ["python3", "Extract/PE_main.py", file_path],
+                ["python3", "Extract/PE_main.py", file_path, api_key],
                 capture_output=True, text=True
             )
-            # Tạo cửa sổ mới để hiển thị kết quả
             result_window = Toplevel()
             result_window.title("Kết quả PE Scanner")
-            result_window.geometry("600x300")
+            result_window.geometry("600x400")
             result_window.resizable(True, True)
             result_window.rowconfigure(0, weight=1)
             result_window.columnconfigure(0, weight=1)
-
             text_box = scrolledtext.ScrolledText(result_window, wrap=tk.WORD, font=("Courier", 10))
-            text_box.grid(row=0, column=0, sticky="nsew")
-            text_box.pack(padx=10, pady=10)
+            text_box.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
             text_box.tag_configure("left", justify='left')
-
-            # Hiển thị output (stdout hoặc stderr)
             if result.stdout:
-                text_box.insert(tk.END, result.stdout)
+                text_box.insert(tk.END, result.stdout, "left")
             if result.stderr:
-                text_box.insert(tk.END, "\nLỗi:\n" + result.stderr)
+                text_box.insert(tk.END, "\nLỗi:\n" + result.stderr, "left")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể chạy PE scanner:\n{str(e)}")
 
 
-VT_API_KEY = "00790b1307e3907a2c3d7e754a362d397b9844f27239f6af750411d8852400c0" 
 def run_URL():
     url = simpledialog.askstring("Nhập URL", "Nhập URL cần kiểm tra:")
     if not url:
