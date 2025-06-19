@@ -41,7 +41,7 @@ try:
     x = vectorizer.transform([url])
     prediction = model.predict(x)[0]
     label = '✅ benign' if prediction == 'benign' else '🔥 malicious'
-    print(f"🔍 Kết quả từ mô hình ML: {label}")
+    print(f"🔍 Kết quả từ mô hình ML cho {sys.argv[1]}: {label}")
 except Exception as e:
     print(f"❌ Lỗi khi dự đoán bằng mô hình: {e}")
 

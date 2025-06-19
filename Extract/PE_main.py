@@ -82,7 +82,17 @@ def get_version_info(pe):
 #extract the info for a given file using pefile
 def extract_infos(fpath):
     res = {}
-    pe = pefile.PE(fpath)
+    try:
+        pe = pefile.PE(fpath)
+        pe.parse_data_directories(directories=[
+            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'],
+            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT'],
+            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'],
+            pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG']
+        ])
+    except Exception as e:
+        print(f"[!] Lỗi khi đọc PE file {fpath}: {e}")
+        return {}
     res['Machine'] = pe.FILE_HEADER.Machine
     res['SizeOfOptionalHeader'] = pe.FILE_HEADER.SizeOfOptionalHeader
     res['Characteristics'] = pe.FILE_HEADER.Characteristics
@@ -195,7 +205,10 @@ if __name__ == '__main__':
     
     #extracting features from the PE file mentioned in the argument 
     data = extract_infos(sys.argv[1])
-    
+
+    if not data or any(x not in data for x in features):
+        print(f"[!] Bỏ qua file {sys.argv[1]} vì không thể trích xuất đầy đủ đặc trưng.")
+    sys.exit(0)
     #matching it with the features saved in features.pkl
     pe_features = list(map(lambda x:data[x], features))
     print("Features used for classification: ", pe_features)

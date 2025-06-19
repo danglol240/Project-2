@@ -3,7 +3,7 @@ import requests
 import webbrowser
 import subprocess
 import tkinter as tk
-from tkinter import filedialog, messagebox, Toplevel, scrolledtext, simpledialog
+from tkinter import filedialog, messagebox, Toplevel, scrolledtext, simpledialog, Label, Button, Entry
 
 
 VT_API_KEY = "00790b1307e3907a2c3d7e754a362d397b9844f27239f6af750411d8852400c0" 
@@ -38,8 +38,42 @@ def run_PE():
             messagebox.showerror("Lỗi", f"Không thể chạy PE scanner:\n{str(e)}")
 
 
+def custom_url_dialog(parent, title="Nhập URL", prompt="Nhập URL cần kiểm tra:"):
+    dialog = Toplevel(parent)
+    dialog.title(title)
+    dialog.geometry("600x150")  # Kích thước rộng hơn mặc định
+    dialog.resizable(True, False)
+
+    Label(dialog, text=prompt, font=("Courier", 14)).pack(pady=10)
+    entry = Entry(dialog, font=("Courier", 14), width=60)
+    entry.pack(padx=20, pady=10)
+    entry.focus_set()
+
+    result = {"url": None}
+
+    def on_ok():
+        url = entry.get().strip()
+        if url:
+            result["url"] = url
+            dialog.destroy()
+        else:
+            messagebox.showwarning("Cảnh báo", "Vui lòng nhập URL!")
+
+    def on_cancel():
+        dialog.destroy()
+
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(pady=10)
+    Button(btn_frame, text="OK", font=("Courier", 12), width=10, command=on_ok).pack(side="left", padx=10)
+    Button(btn_frame, text="Hủy", font=("Courier", 12), width=10, command=on_cancel).pack(side="right", padx=10)
+
+    dialog.transient(parent)
+    dialog.grab_set()
+    parent.wait_window(dialog)
+    return result["url"]
+
 def run_URL():
-    url = simpledialog.askstring("Nhập URL", "Nhập URL cần kiểm tra:")
+    url = custom_url_dialog(root)
     if not url:
         return
     try:
