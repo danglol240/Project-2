@@ -67,23 +67,23 @@ def on_exit():
 # Tạo cửa sổ chính
 root = tk.Tk()
 root.title("Malware Detector")
-root.geometry("400x300")
+root.geometry("1000x450")
 root.resizable(True,True)
 
 # Tiêu đề
-title = tk.Label(root, text="Malware Detector", font=("Courier", 20, "bold"))
+title = tk.Label(root, text="Malware Detector", font=("Courier", 30, "bold"))
 title.pack(pady=20)
 
 # Nút PE Scanner
-btn_pe = tk.Button(root, text="🛡️ PE Scanner", width=25, height=2, command=run_PE)
+btn_pe = tk.Button(root, text="🛡️ PE Scanner",font=("Courier", 20, "bold"), width=25, height=2, command=run_PE)
 btn_pe.pack(pady=10)
 
 # Nút URL Scanner
-btn_url = tk.Button(root, text="🌐 URL Scanner", width=25, height=2, command=run_URL)
+btn_url = tk.Button(root, text="🌐 URL Scanner",font=("Courier", 20, "bold"), width=25, height=2, command=run_URL)
 btn_url.pack(pady=10)
 
 # Nút Thoát
-btn_exit = tk.Button(root, text="❌ Exit", width=25, height=2, command=on_exit)
+btn_exit = tk.Button(root, text="❌ Exit",font=("Courier", 20, "bold"), width=25, height=2, command=on_exit)
 btn_exit.pack(pady=10)
 
 root.mainloop()
